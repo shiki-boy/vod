@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Upload</title>
+    </head>
+    <body>
+        <input type="file" name="video" id="video-file" />
+
+        <script>
+            const fileInput = document.getElementById("video-file")
+
+            fileInput.addEventListener("change", async (event) => {
+                event.preventDefault()
+                const file = event.target.files[0]
+                const chunkSize = 1024 * 1024 // 1MB
+                const totalChunks = Math.ceil(file.size / chunkSize)
+                let startByte = 0
+                for (let i = 1; i <= totalChunks; i++) {
+                    console.log(i)
+                    const endByte = Math.min(startByte + chunkSize, file.size)
+                    const chunk = file.slice(startByte, endByte)
+                    await uploadChunk(chunk, totalChunks, i)
+                    startByte = endByte
+                }
+                alert("Upload complete")
+            })
+
+            async function uploadChunk(chunk, totalChunks, currentChunk) {
+                const formData = new FormData()
+                formData.append("video", chunk)
+                formData.append("totalChunks", totalChunks)
+                formData.append("currentChunk", currentChunk)
+                try {
+                    const response = await fetch("http://localhost:8000/upload", {
+                        method: "POST",
+                        body: formData,
+                        mode: 'no-cors'
+                    })
+                    if (!response.ok) {
+                        throw new Error("Chunk upload failed")
+                    }
+                } catch (error) {
+                    console.log(error)
+                    // debugger
+                }
+            }
+        </script>
+    </body>
+</html>
