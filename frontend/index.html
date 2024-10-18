@@ -3,10 +3,29 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+
         <title>Upload</title>
     </head>
+
+    <style>
+        .video-container {
+            width: 66vw;
+            margin: 2rem auto;
+        }
+    </style>
+
     <body>
         <input type="file" name="video" id="video-file" />
+
+        <button type="button" onclick="load()">Load</button>
+
+        <div class="video-container">
+            <video src=""></video>
+        </div>
+
+        <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 
         <script>
             const fileInput = document.getElementById("video-file")
@@ -18,7 +37,6 @@
                 const totalChunks = Math.ceil(file.size / chunkSize)
                 let startByte = 0
                 for (let i = 1; i <= totalChunks; i++) {
-                    console.log(i)
                     const endByte = Math.min(startByte + chunkSize, file.size)
                     const chunk = file.slice(startByte, endByte)
                     await uploadChunk(chunk, totalChunks, i)
@@ -33,17 +51,38 @@
                 formData.append("totalChunks", totalChunks)
                 formData.append("currentChunk", currentChunk)
                 try {
-                    const response = await fetch("http://localhost:8000/upload", {
-                        method: "POST",
-                        body: formData,
-                        mode: 'no-cors'
-                    })
+                    const response = await fetch(
+                        "http://localhost:8000/upload",
+                        {
+                            method: "POST",
+                            body: formData,
+                            mode: "no-cors",
+                        }
+                    )
                     if (!response.ok) {
                         throw new Error("Chunk upload failed")
                     }
                 } catch (error) {
                     console.log(error)
                     // debugger
+                }
+            }
+
+            function load() {
+                const source =
+                    "http://localhost:8000/static/index-1729189286546.m3u8"
+                const video = document.querySelector("video")
+
+                const player = new Plyr(video, {})
+
+                if (!Hls.isSupported()) {
+                    video.src = source
+                } else {
+                    // For more Hls.js options, see https://github.com/dailymotion/hls.js
+                    const hls = new Hls()
+                    hls.loadSource(source)
+                    hls.attachMedia(video)
+                    window.hls = hls
                 }
             }
         </script>

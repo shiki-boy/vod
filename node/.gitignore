@@ -1,3 +1,4 @@
-uploads/**
+uploads/*
 chunks/*
 node_modules
+videos/*
