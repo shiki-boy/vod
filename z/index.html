@@ -39,24 +39,26 @@
                 for (let i = 1; i <= totalChunks; i++) {
                     const endByte = Math.min(startByte + chunkSize, file.size)
                     const chunk = file.slice(startByte, endByte)
-                    await uploadChunk(chunk, totalChunks, i)
+                    const fileName = file.name.slice(0, file.name.lastIndexOf('.'))
+                    await uploadChunk(chunk, totalChunks, i, fileName)
                     startByte = endByte
                 }
                 alert("Upload complete")
             })
 
-            async function uploadChunk(chunk, totalChunks, currentChunk) {
+            async function uploadChunk(chunk, totalChunks, currentChunk, fileName) {
                 const formData = new FormData()
                 formData.append("video", chunk)
                 formData.append("totalChunks", totalChunks)
                 formData.append("currentChunk", currentChunk)
+                formData.append("fileName", fileName)
                 try {
                     const response = await fetch(
                         "http://localhost:8000/upload",
                         {
                             method: "POST",
                             body: formData,
-                            mode: "no-cors",
+                            // mode: "no-cors",
                         }
                     )
                     if (!response.ok) {

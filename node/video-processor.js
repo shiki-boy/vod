@@ -1,5 +1,6 @@
 import amqp from "amqplib"
 import { spawn } from "child_process"
+import fs from "fs"
 
 const queue = "video_processor"
 
@@ -21,7 +22,7 @@ try {
             if (message) {
                 const data = JSON.parse(message.content.toString())
                 console.log("Received ", data)
-                startProcess(data.videoPath)
+                startProcess(data.videoPath, data.videoName)
             }
         },
         { noAck: true }
@@ -34,13 +35,37 @@ try {
     console.log("Got error in queue: " + error)
 }
 
-function startProcess(videoPath) {
-    const outputPath = `./videos`
-    const hlsPath = `${outputPath}/index-${Date.now()}.m3u8`
+function startProcess(videoPath, videoName) {
+    const outputPath = `./videos/${videoName}`
 
-    const ffmpegCommand = `ffmpeg -i ${videoPath} -codec:v libx264 -codec:a aac -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputPath}/segment%03d.ts" -start_number 0 ${hlsPath}`
+    if (!fs.existsSync(outputPath)) {
+        fs.mkdirSync(outputPath, { recursive: true })
+    }
 
-    spawn(ffmpegCommand).stdout.on("data", function (msg) {
+    const hlsPath = `${outputPath}/index.m3u8`
+
+    const sp = spawn("ffmpeg", [
+        "-i",
+        videoPath,
+        "-codec:v",
+        "libx264",
+        "-codec:a",
+        "aac",
+        "-hls_time",
+        "10",
+        "-hls_playlist_type",
+        "vod",
+        "-hls_segment_filename",
+        `${outputPath}/segment%03d.ts`,
+        "-start_number",
+        "0",
+        hlsPath,
+    ])
+
+    sp.stdout.on("data", function (msg) {
         console.log(msg.toString())
+    })
+    sp.stderr.on("data", function (err) {
+        console.error("GOT ERROR: " + err)
     })
 }
