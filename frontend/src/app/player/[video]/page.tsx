@@ -8,7 +8,7 @@ const Player = dynamic(() => import("@/components/Player"), {
 
 export default function Page({ params }: { params: { video: string } }) {
     const { video } = params;
-    const videoSrc = `http://localhost:8000/static/${video}/index.m3u8`;
+    const videoSrc = `http://localhost:8000/static/${video}/master_index.m3u8`;
 
     return <Player videoSrc={videoSrc} />;
 }
